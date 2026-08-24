@@ -1,8 +1,10 @@
 import json
+import re
 import unittest
+from pathlib import Path
 
-from sudhanva import APIError, Client
-from sudhanva.client import Response
+from sudhanva import APIError, Client, __version__
+from sudhanva.client import USER_AGENT, Response
 
 
 class FakeTransport:
@@ -20,6 +22,14 @@ def response(status, payload):
 
 
 class ClientTest(unittest.TestCase):
+    def test_package_metadata_and_user_agent_share_one_version(self):
+        pyproject = (Path(__file__).parents[1] / "pyproject.toml").read_text()
+        project_version = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
+
+        self.assertIsNotNone(project_version)
+        self.assertEqual(project_version.group(1), __version__)
+        self.assertEqual(USER_AGENT, f"sudhanva-python/{__version__}")
+
     def test_posts_encodes_filters_and_identifies_client(self):
         transport = FakeTransport([response(200, {"posts": []})])
         client = Client(base_url="https://example.test/api/v1", transport=transport)

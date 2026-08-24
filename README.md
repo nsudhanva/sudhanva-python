@@ -10,7 +10,7 @@ The API is public and requires no credentials. Do not send private data.
 ## Install
 
 ```bash
-python -m pip install sudhanva
+python -m pip install sudhanva==0.1.0
 ```
 
 ## Use
