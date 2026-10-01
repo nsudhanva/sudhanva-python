@@ -9,6 +9,8 @@ The API is public and requires no credentials. Do not send private data.
 
 ## Install
 
+Requires Python 3.10 or newer.
+
 ```bash
 python -m pip install sudhanva==0.2.0
 ```
@@ -33,7 +35,9 @@ result = client.wait_for_profile_insight(job["job_id"])
 ```
 
 All methods return decoded JSON dictionaries. Non-success responses raise `sudhanva.APIError` with
-`status`, `code`, `message`, and the decoded response body.
+`status`, `code`, `message`, `hint`, `docs_url`, and the decoded response body. RFC 9457 problem
+responses from the profile-insight endpoints map `detail` (or `title`) to `message` and the last
+segment of `type` to `code`.
 
 ## API coverage
 

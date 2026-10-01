@@ -27,12 +27,60 @@ Transport = Callable[[str, str, Mapping[str, str], Optional[bytes], float], Resp
 class APIError(RuntimeError):
     """An error response returned by the sudhanva.me API."""
 
-    def __init__(self, status: int, code: str, message: str, body: Any) -> None:
+    def __init__(
+        self,
+        status: int,
+        code: str,
+        message: str,
+        body: Any,
+        *,
+        hint: Optional[str] = None,
+        docs_url: Optional[str] = None,
+    ) -> None:
         super().__init__(f"{status} {code}: {message}")
         self.status = status
         self.code = code
         self.message = message
         self.body = body
+        self.hint = hint
+        self.docs_url = docs_url
+
+
+def _text(value: Any) -> Optional[str]:
+    return value if isinstance(value, str) and value else None
+
+
+def _problem_code(problem_type: Optional[str]) -> Optional[str]:
+    """Return the last fragment or path segment of an RFC 9457 problem type."""
+    if problem_type is None or problem_type == "about:blank":
+        return None
+    base, _, fragment = problem_type.partition("#")
+    return _text(fragment) or _text(base.rstrip("/").rsplit("/", 1)[-1])
+
+
+def _api_error(status: int, payload: Any) -> APIError:
+    """Build an APIError from the standard envelope or an RFC 9457 problem."""
+    body = payload if isinstance(payload, dict) else {}
+    nested = body.get("error")
+    error = nested if isinstance(nested, dict) else body
+
+    code = _text(error.get("code")) or _text(body.get("code"))
+    message = _text(error.get("message")) or _text(body.get("message"))
+    if code is None and message is None:
+        title = _text(body.get("title"))
+        code = _problem_code(_text(body.get("type"))) or title
+        message = _text(body.get("detail")) or title
+    if message is None and isinstance(nested, str):
+        message = nested
+
+    return APIError(
+        status,
+        code or "api_error",
+        message or "Request failed",
+        payload,
+        hint=_text(error.get("hint")),
+        docs_url=_text(error.get("docs_url")),
+    )
 
 
 class Client:
@@ -179,10 +227,7 @@ class Client:
             raise APIError(response.status, "invalid_response", "API returned invalid JSON", None) from exc
 
         if not 200 <= response.status < 300:
-            error = payload.get("error", payload) if isinstance(payload, dict) else {}
-            code = str(error.get("code", payload.get("code", "api_error")))
-            message = str(error.get("message", payload.get("message", "Request failed")))
-            raise APIError(response.status, code, message, payload)
+            raise _api_error(response.status, payload)
         if not isinstance(payload, dict):
             raise APIError(response.status, "invalid_response", "API returned a non-object response", payload)
         return payload

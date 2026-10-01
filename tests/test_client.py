@@ -96,6 +96,70 @@ class ClientTest(unittest.TestCase):
         self.assertEqual(caught.exception.status, 404)
         self.assertEqual(caught.exception.code, "not_found")
 
+    def test_error_envelope_keeps_hint_and_docs_url(self):
+        envelope = {
+            "error": {
+                "code": "POST_NOT_FOUND",
+                "message": "No published post exists.",
+                "hint": "List published posts first.",
+                "docs_url": "https://sudhanva.me/developers/",
+            }
+        }
+        client = Client(transport=FakeTransport([response(404, envelope)]))
+
+        with self.assertRaises(APIError) as caught:
+            client.post("missing")
+
+        self.assertEqual(caught.exception.code, "POST_NOT_FOUND")
+        self.assertEqual(caught.exception.message, "No published post exists.")
+        self.assertEqual(caught.exception.hint, "List published posts first.")
+        self.assertEqual(caught.exception.docs_url, "https://sudhanva.me/developers/")
+
+    def test_problem_details_are_exposed(self):
+        problem = {
+            "type": "https://sudhanva.me/docs/profile-insights/#idempotency-key-reuse",
+            "title": "Idempotency-Key reused",
+            "status": 422,
+            "detail": "This key was already used with a different request body.",
+            "instance": "/api/v1/profile-insights",
+        }
+        client = Client(transport=FakeTransport([response(422, problem)]))
+
+        with self.assertRaises(APIError) as caught:
+            client.create_profile_insight(audience="agent", idempotency_key="python-test-123")
+
+        self.assertEqual(caught.exception.status, 422)
+        self.assertEqual(caught.exception.code, "idempotency-key-reuse")
+        self.assertEqual(caught.exception.message, problem["detail"])
+        self.assertEqual(caught.exception.body, problem)
+
+    def test_problem_without_detail_falls_back_to_title(self):
+        problem = {"type": "about:blank", "title": "Service Unavailable", "status": 503}
+        client = Client(transport=FakeTransport([response(503, problem)]))
+
+        with self.assertRaises(APIError) as caught:
+            client.profile_insight("pi_test")
+
+        self.assertEqual(caught.exception.code, "Service Unavailable")
+        self.assertEqual(caught.exception.message, "Service Unavailable")
+
+    def test_unexpected_error_bodies_still_raise_api_error(self):
+        for payload in (["unexpected"], {"error": "Bad gateway"}, "oops", None):
+            with self.subTest(payload=payload):
+                client = Client(transport=FakeTransport([response(502, payload)]))
+
+                with self.assertRaises(APIError) as caught:
+                    client.profile()
+
+                self.assertEqual(caught.exception.status, 502)
+                self.assertEqual(caught.exception.code, "api_error")
+                self.assertEqual(caught.exception.body, payload)
+
+        client = Client(transport=FakeTransport([response(502, {"error": "Bad gateway"})]))
+        with self.assertRaises(APIError) as caught:
+            client.profile()
+        self.assertEqual(caught.exception.message, "Bad gateway")
+
 
 if __name__ == "__main__":
     unittest.main()
