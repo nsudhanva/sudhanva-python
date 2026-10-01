@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Optional, Sequence
 
 DEFAULT_BASE_URL = "https://sudhanva.me/api/v1"
-USER_AGENT = "sudhanva-python/0.1.0"
+USER_AGENT = "sudhanva-python/0.2.0"
 
 
 @dataclass(frozen=True)

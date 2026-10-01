@@ -1,0 +1,11 @@
+# Changelog
+
+## 0.2.0 — 2026-10-01
+
+- Requires Python 3.10 or newer. Tested on Python 3.10 through 3.14 and the 3.15 release candidate.
+- `sudhanva.__version__`, the package metadata, and the `User-Agent` header report the same version.
+- Releases publish to PyPI from GitHub Actions through trusted publishing.
+
+## 0.1.0 — 2026-08-24
+
+- First release: profile, articles, search, batch reads, and profile-insight jobs.

@@ -39,7 +39,7 @@ class ClientTest(unittest.TestCase):
         method, url, headers, body, timeout = transport.requests[0]
         self.assertEqual(method, "GET")
         self.assertEqual(url, "https://example.test/api/v1/posts?limit=5&tag=machine-learning")
-        self.assertEqual(headers["User-Agent"], "sudhanva-python/0.1.0")
+        self.assertEqual(headers["User-Agent"], "sudhanva-python/0.2.0")
         self.assertIsNone(body)
         self.assertEqual(timeout, 10.0)
 
