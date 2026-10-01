@@ -7,7 +7,7 @@ name = "sudhanva"
 version = "0.1.0"
 description = "Minimal Python client for the public sudhanva.me API."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "MIT"
 authors = [{ name = "Sudhanva Narayana", email = "nsudhanva@gmail.com" }]
 keywords = ["sudhanva", "api", "sdk", "agents", "machine-learning"]
@@ -16,6 +16,11 @@ classifiers = [
   "Intended Audience :: Developers",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Software Development :: Libraries",
   "Typing :: Typed",
 ]
